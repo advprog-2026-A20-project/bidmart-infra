@@ -1,0 +1,28 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+build/
+
+# Java/Kotlin
+.gradle/
+target/
+out/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
