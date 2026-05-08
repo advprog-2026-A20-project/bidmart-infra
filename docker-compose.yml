@@ -1,0 +1,121 @@
+name: bidmart-local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bidmart-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  gateway:
+    image: ${GATEWAY_IMAGE}
+    container_name: bidmart-gateway
+    restart: unless-stopped
+    ports:
+      - "${GATEWAY_PORT}:8080"
+    environment:
+      AUTH_SERVICE_URL: ${GATEWAY_SERVICE_URL_AUTH}
+      LISTING_QUERY_SERVICE_URL: ${GATEWAY_SERVICE_URL_LISTING_QUERY}
+      AUCTION_QUERY_SERVICE_URL: ${GATEWAY_SERVICE_URL_AUCTION_QUERY}
+      BIDDING_COMMAND_SERVICE_URL: ${GATEWAY_SERVICE_URL_BIDDING_COMMAND}
+      WALLET_SERVICE_URL: ${GATEWAY_SERVICE_URL_WALLET}
+      NOTIFICATION_SERVICE_URL: ${GATEWAY_SERVICE_URL_NOTIFICATION}
+    depends_on:
+      - auth-service
+      - listing-query-service
+      - auction-query-service
+      - bidding-command-service
+      - wallet-service
+
+  frontend:
+    image: ${FRONTEND_IMAGE}
+    container_name: bidmart-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT}:5173"
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    depends_on:
+      - gateway
+
+  auth-service:
+    image: ${AUTH_SERVICE_IMAGE}
+    container_name: bidmart-auth-service
+    restart: unless-stopped
+    ports:
+      - "${AUTH_SERVICE_PORT}:8081"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  listing-query-service:
+    image: ${LISTING_QUERY_SERVICE_IMAGE}
+    container_name: bidmart-listing-query-service
+    restart: unless-stopped
+    ports:
+      - "${LISTING_QUERY_SERVICE_PORT}:8082"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  auction-query-service:
+    image: ${AUCTION_QUERY_SERVICE_IMAGE}
+    container_name: bidmart-auction-query-service
+    restart: unless-stopped
+    ports:
+      - "${AUCTION_QUERY_SERVICE_PORT}:8083"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  bidding-command-service:
+    image: ${BIDDING_COMMAND_SERVICE_IMAGE}
+    container_name: bidmart-bidding-command-service
+    restart: unless-stopped
+    ports:
+      - "${BIDDING_COMMAND_SERVICE_PORT}:8084"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  wallet-service:
+    image: ${WALLET_SERVICE_IMAGE}
+    container_name: bidmart-wallet-service
+    restart: unless-stopped
+    ports:
+      - "${WALLET_SERVICE_PORT}:8085"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  notification-service:
+    image: ${NOTIFICATION_SERVICE_IMAGE}
+    container_name: bidmart-notification-service
+    restart: unless-stopped
+    ports:
+      - "${NOTIFICATION_SERVICE_PORT}:8086"
+    profiles: ["optional"]
+
