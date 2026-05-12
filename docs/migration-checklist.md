@@ -1,23 +1,22 @@
-# Migration Checklist Monolith -> Multi-Repo
+# Migration Checklist Monolith -> Microservices
 
-## Fondasi Infra
-- [x] Repository `bidmart-infra` dibuat.
-- [x] `docker-compose.yml` baseline tersedia.
-- [x] `.env.example` tersedia tanpa secret real.
-- [x] Dokumen routing table awal tersedia.
+## Infra
+- [x] Compose satu command untuk seluruh stack lokal
+- [x] `.env.example` sinkron dengan service aktif
+- [x] Smoke test end-to-end tersedia
 
-## Integrasi Service
-- [ ] Semua image container service tersedia di registry.
-- [ ] Healthcheck per service distandarkan.
-- [ ] Kontrak environment variable per service distandarkan.
-- [ ] Strategi database final (shared vs isolated) diputuskan.
+## Ownership Migration
+- [x] Auth dipindah ke `bidmart-auth-service`
+- [x] Wallet dipindah ke `bidmart-wallet-service`
+- [x] Auction/Bidding command dipindah ke `bidmart-bidding-command-service`
+- [x] Gateway route command/auth/wallet sudah ke service masing-masing
 
-## Gateway Strangler
-- [ ] Route lama monolith dipetakan dan diberi prioritas migrasi.
-- [ ] Fallback ke legacy monolith diverifikasi.
-- [ ] Versioning endpoint antar service disepakati.
+## Gateway Cleanup
+- [x] Runtime monolith logic untuk auth dihapus dari gateway
+- [x] Runtime monolith logic untuk wallet dihapus dari gateway
+- [x] Runtime monolith logic untuk auction/bidding command dihapus dari gateway
+- [x] Test legacy command/auth/wallet gateway sudah dihapus/diganti proxy test
 
-## Operasional Lokal
-- [ ] Seed data lokal lintas service.
-- [ ] Script e2e smoke test gabungan.
-- [ ] Observability lokal (logging/tracing) dasar.
+## Verification
+- [x] `./scripts/smoke-test.sh` pass
+- [x] Compose `up -d --build` pass
